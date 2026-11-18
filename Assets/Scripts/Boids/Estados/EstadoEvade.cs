@@ -1,4 +1,4 @@
-public class EstadoEvade : IEstado
+public class EstadoEvade : Estado<EstadoBoid>
 {
     private readonly Boid boid;
 
@@ -7,18 +7,27 @@ public class EstadoEvade : IEstado
         this.boid = boid;
     }
 
-    public void Entrar() { }
+    public override void Entrar() { }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
-        Agente cazador = boid.Percepcion.Cazador;
-        if (cazador != null)
-            boid.AgregarFuerza(boid.FuerzaEvade(cazador));
+        if (boid.EstaMuerto)
+        {
+            fsm.CambiarEstado(EstadoBoid.Dead);
+            return;
+        }
 
+        if (!boid.VeCazador)
+        {
+            fsm.CambiarEstado(boid.VeObjeto ? EstadoBoid.SeekObject : EstadoBoid.Flocking);
+            return;
+        }
+
+        boid.AgregarFuerza(boid.FuerzaEvade(boid.Percepcion.Cazador));
         boid.AgregarFuerza(boid.FuerzaSeparacionEvade());
         boid.AgregarFuerza(boid.FuerzaEvitarObjetos());
         boid.AgregarFuerza(boid.FuerzaLimites());
     }
 
-    public void Salir() { }
+    public override void Salir() { }
 }

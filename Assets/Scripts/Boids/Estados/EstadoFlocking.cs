@@ -1,4 +1,4 @@
-public class EstadoFlocking : IEstado
+public class EstadoFlocking : Estado<EstadoBoid>
 {
     private readonly Boid boid;
 
@@ -7,10 +7,28 @@ public class EstadoFlocking : IEstado
         this.boid = boid;
     }
 
-    public void Entrar() { }
+    public override void Entrar() { }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
+        if (boid.EstaMuerto)
+        {
+            fsm.CambiarEstado(EstadoBoid.Dead);
+            return;
+        }
+
+        if (boid.VeCazador)
+        {
+            fsm.CambiarEstado(EstadoBoid.Evade);
+            return;
+        }
+
+        if (boid.VeObjeto)
+        {
+            fsm.CambiarEstado(EstadoBoid.SeekObject);
+            return;
+        }
+
         boid.AgregarFuerza(boid.FuerzaSeparacion());
         boid.AgregarFuerza(boid.FuerzaAlineacion());
         boid.AgregarFuerza(boid.FuerzaCohesion());
@@ -19,5 +37,5 @@ public class EstadoFlocking : IEstado
         boid.AgregarFuerza(boid.FuerzaLimites());
     }
 
-    public void Salir() { }
+    public override void Salir() { }
 }

@@ -90,7 +90,7 @@ public class Cazador : Agente
         if (waypoints.Count == 0 && Limites.Instancia != null)
             waypoints.AddRange(Limites.Instancia.Esquinas(distanciaWaypointsAlBorde));
 
-        fsm.Iniciar(EstadoCazador.Patrol);
+        fsm.CambiarEstado(EstadoCazador.Patrol);
     }
 
     private void Update()
@@ -105,31 +105,18 @@ public class Cazador : Agente
         fsm = new MaquinaEstados<EstadoCazador>();
         fsm.OnCambioEstado += estado => OnCambioEstado?.Invoke(estado);
 
-        EstadoGather gather = new EstadoGather(this);
-
         fsm.AgregarEstado(EstadoCazador.Patrol, new EstadoPatrol(this));
         fsm.AgregarEstado(EstadoCazador.Hunt, new EstadoHunt(this));
-        fsm.AgregarEstado(EstadoCazador.Gather, gather);
+        fsm.AgregarEstado(EstadoCazador.Gather, new EstadoGather(this));
         fsm.AgregarEstado(EstadoCazador.Rest, new EstadoRest(this));
-
-        fsm.AgregarTransicion(EstadoCazador.Patrol, EstadoCazador.Gather, HayBoidMuerto);
-        fsm.AgregarTransicion(EstadoCazador.Patrol, EstadoCazador.Hunt, () => PuedeAtacar && Percepcion.VivoMasCercano() != null);
-
-        fsm.AgregarTransicion(EstadoCazador.Hunt, EstadoCazador.Rest, () => energy <= 0f);
-        fsm.AgregarTransicion(EstadoCazador.Hunt, EstadoCazador.Patrol, PresaFueraDeLimites);
-        fsm.AgregarTransicion(EstadoCazador.Hunt, EstadoCazador.Gather, HayBoidMuerto);
-
-        fsm.AgregarTransicion(EstadoCazador.Gather, EstadoCazador.Patrol, () => gather.Terminado);
-
-        fsm.AgregarTransicion(EstadoCazador.Rest, EstadoCazador.Patrol, () => energy >= maxEnergy);
     }
 
-    private bool HayBoidMuerto()
+    public bool HayBoidMuerto()
     {
         return Percepcion.MuertoMasCercano() != null;
     }
 
-    private bool PresaFueraDeLimites()
+    public bool PresaFueraDeLimites()
     {
         return Presa != null && Limites.Instancia != null && !Limites.Instancia.Contiene(Presa.transform.position);
     }

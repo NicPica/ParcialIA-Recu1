@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class EstadoConsume : IEstado
+public class EstadoConsume : Estado<EstadoBoid>
 {
     private readonly Boid boid;
     private float tiempo;
@@ -10,15 +10,31 @@ public class EstadoConsume : IEstado
         this.boid = boid;
     }
 
-    public void Entrar()
+    public override void Entrar()
     {
         tiempo = 0f;
     }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
+        if (boid.EstaMuerto)
+        {
+            fsm.CambiarEstado(EstadoBoid.Dead);
+            return;
+        }
+
+        if (boid.VeCazador)
+        {
+            fsm.CambiarEstado(EstadoBoid.Evade);
+            return;
+        }
+
         ObjetoInteres objeto = boid.ObjetivoActual;
-        if (objeto == null) return;
+        if (objeto == null)
+        {
+            fsm.CambiarEstado(EstadoBoid.Flocking);
+            return;
+        }
 
         boid.AgregarFuerza(boid.FuerzaArrive(objeto));
         boid.AgregarFuerza(boid.FuerzaSeparacion());
@@ -32,7 +48,7 @@ public class EstadoConsume : IEstado
         }
     }
 
-    public void Salir()
+    public override void Salir()
     {
         boid.ObjetivoActual = null;
     }

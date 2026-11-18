@@ -1,4 +1,4 @@
-public class EstadoRest : IEstado
+public class EstadoRest : Estado<EstadoCazador>
 {
     private readonly Cazador cazador;
 
@@ -7,16 +7,22 @@ public class EstadoRest : IEstado
         this.cazador = cazador;
     }
 
-    public void Entrar()
+    public override void Entrar()
     {
         cazador.Detener();
     }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
+        if (cazador.Energy >= cazador.MaxEnergy)
+        {
+            fsm.CambiarEstado(EstadoCazador.Patrol);
+            return;
+        }
+
         cazador.Detener();
         cazador.RecargarEnergia();
     }
 
-    public void Salir() { }
+    public override void Salir() { }
 }

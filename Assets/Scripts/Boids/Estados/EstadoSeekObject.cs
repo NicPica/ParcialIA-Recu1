@@ -1,4 +1,4 @@
-public class EstadoSeekObject : IEstado
+public class EstadoSeekObject : Estado<EstadoBoid>
 {
     private readonly Boid boid;
 
@@ -7,14 +7,36 @@ public class EstadoSeekObject : IEstado
         this.boid = boid;
     }
 
-    public void Entrar()
+    public override void Entrar()
     {
         boid.ObjetivoActual = boid.Percepcion.ObjetoMasCercano;
     }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
-        if (boid.ObjetivoActual == null) return;
+        if (boid.EstaMuerto)
+        {
+            fsm.CambiarEstado(EstadoBoid.Dead);
+            return;
+        }
+
+        if (boid.VeCazador)
+        {
+            fsm.CambiarEstado(EstadoBoid.Evade);
+            return;
+        }
+
+        if (boid.LlegoAlObjetivo())
+        {
+            fsm.CambiarEstado(EstadoBoid.Consume);
+            return;
+        }
+
+        if (boid.ObjetivoActual == null)
+        {
+            fsm.CambiarEstado(EstadoBoid.Flocking);
+            return;
+        }
 
         boid.AgregarFuerza(boid.FuerzaArrive(boid.ObjetivoActual));
         boid.AgregarFuerza(boid.FuerzaSeparacion());
@@ -22,5 +44,5 @@ public class EstadoSeekObject : IEstado
         boid.AgregarFuerza(boid.FuerzaLimites());
     }
 
-    public void Salir() { }
+    public override void Salir() { }
 }

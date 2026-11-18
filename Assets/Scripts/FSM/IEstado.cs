@@ -1,6 +1,10 @@
-public interface IEstado
+public abstract class Estado<T>
 {
-    void Entrar();
-    void Ejecutar();
-    void Salir();
+    protected MaquinaEstados<T> fsm;
+
+    public void AsignarFSM(MaquinaEstados<T> maquina) => fsm = maquina;
+
+    public abstract void Entrar();
+    public abstract void Ejecutar();
+    public abstract void Salir();
 }

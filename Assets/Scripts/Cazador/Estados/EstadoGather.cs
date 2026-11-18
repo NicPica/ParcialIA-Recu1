@@ -1,34 +1,29 @@
 using UnityEngine;
 
-public class EstadoGather : IEstado
+public class EstadoGather : Estado<EstadoCazador>
 {
     private readonly Cazador cazador;
     private Boid objetivo;
     private float tiempo;
-
-    public bool Terminado { get; private set; }
 
     public EstadoGather(Cazador cazador)
     {
         this.cazador = cazador;
     }
 
-    public void Entrar()
+    public override void Entrar()
     {
         cazador.CambiarLimiteVelocidad(cazador.VelocidadMax);
         objetivo = cazador.Percepcion.MuertoMasCercano();
         cazador.BoidARecolectar = objetivo;
         tiempo = 0f;
-        Terminado = objetivo == null;
     }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
-        if (Terminado) return;
-
         if (!ObjetivoDisponible())
         {
-            Terminado = true;
+            fsm.CambiarEstado(EstadoCazador.Patrol);
             return;
         }
 
@@ -44,11 +39,11 @@ public class EstadoGather : IEstado
         if (tiempo >= cazador.TiempoRecoleccion)
         {
             objetivo.Recolectar();
-            Terminado = true;
+            fsm.CambiarEstado(EstadoCazador.Patrol);
         }
     }
 
-    public void Salir()
+    public override void Salir()
     {
         cazador.BoidARecolectar = null;
         objetivo = null;

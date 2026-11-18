@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class EstadoPatrol : IEstado
+public class EstadoPatrol : Estado<EstadoCazador>
 {
     private readonly Cazador cazador;
     private int indice;
@@ -12,13 +12,25 @@ public class EstadoPatrol : IEstado
         this.cazador = cazador;
     }
 
-    public void Entrar()
+    public override void Entrar()
     {
         cazador.CambiarLimiteVelocidad(cazador.VelocidadPatrol);
     }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
+        if (cazador.HayBoidMuerto())
+        {
+            fsm.CambiarEstado(EstadoCazador.Gather);
+            return;
+        }
+
+        if (cazador.PuedeAtacar && cazador.Percepcion.VivoMasCercano() != null)
+        {
+            fsm.CambiarEstado(EstadoCazador.Hunt);
+            return;
+        }
+
         if (cazador.Waypoints.Count > 0)
         {
             Vector3 destino = cazador.Waypoints[indice];
@@ -36,7 +48,7 @@ public class EstadoPatrol : IEstado
         }
     }
 
-    public void Salir() { }
+    public override void Salir() { }
 
     private void AvanzarWaypoint()
     {

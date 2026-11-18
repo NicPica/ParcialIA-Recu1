@@ -1,35 +1,30 @@
 using UnityEngine;
 
-public class EstadoRespawn : IEstado
+public class EstadoRespawn : Estado<EstadoBoid>
 {
     private readonly Boid boid;
     private float tiempo;
-
-    public bool Terminado { get; private set; }
 
     public EstadoRespawn(Boid boid)
     {
         this.boid = boid;
     }
 
-    public void Entrar()
+    public override void Entrar()
     {
         tiempo = 0f;
-        Terminado = false;
         boid.Ocultar();
     }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
-        if (Terminado) return;
-
         tiempo += Time.deltaTime;
         if (tiempo >= boid.TiempoRespawn)
         {
             boid.Reaparecer();
-            Terminado = true;
+            fsm.CambiarEstado(EstadoBoid.Flocking);
         }
     }
 
-    public void Salir() { }
+    public override void Salir() { }
 }

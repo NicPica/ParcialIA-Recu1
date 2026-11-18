@@ -64,6 +64,8 @@ public class Boid : Agente
     public ObjetoInteres ObjetivoActual { get; set; }
     public bool FueRecolectado { get; private set; }
     public bool EstaMuerto => vida <= 0;
+    public bool VeCazador => Percepcion.Cazador != null;
+    public bool VeObjeto => Percepcion.ObjetoMasCercano != null;
     public int Vida => vida;
     public int VidaMax => vidaMax;
     public float RadioVision => radioVision;
@@ -90,7 +92,7 @@ public class Boid : Agente
     private void Start()
     {
         IniciarVelocidad(DireccionAleatoria() * velocidadInicial);
-        fsm.Iniciar(EstadoBoid.Flocking);
+        fsm.CambiarEstado(EstadoBoid.Flocking);
     }
 
     private void Update()
@@ -128,40 +130,12 @@ public class Boid : Agente
         fsm = new MaquinaEstados<EstadoBoid>();
         fsm.OnCambioEstado += estado => OnCambioEstado?.Invoke(estado);
 
-        EstadoRespawn respawn = new EstadoRespawn(this);
-
         fsm.AgregarEstado(EstadoBoid.Flocking, new EstadoFlocking(this));
         fsm.AgregarEstado(EstadoBoid.Evade, new EstadoEvade(this));
         fsm.AgregarEstado(EstadoBoid.SeekObject, new EstadoSeekObject(this));
         fsm.AgregarEstado(EstadoBoid.Consume, new EstadoConsume(this));
         fsm.AgregarEstado(EstadoBoid.Dead, new EstadoDead(this));
-        fsm.AgregarEstado(EstadoBoid.Respawn, respawn);
-
-        System.Func<bool> muerto = () => EstaMuerto;
-        System.Func<bool> veCazador = () => Percepcion.Cazador != null;
-        System.Func<bool> veObjeto = () => Percepcion.ObjetoMasCercano != null;
-        System.Func<bool> sinObjetivo = () => ObjetivoActual == null;
-
-        fsm.AgregarTransicion(EstadoBoid.Flocking, EstadoBoid.Dead, muerto);
-        fsm.AgregarTransicion(EstadoBoid.Flocking, EstadoBoid.Evade, veCazador);
-        fsm.AgregarTransicion(EstadoBoid.Flocking, EstadoBoid.SeekObject, veObjeto);
-
-        fsm.AgregarTransicion(EstadoBoid.Evade, EstadoBoid.Dead, muerto);
-        fsm.AgregarTransicion(EstadoBoid.Evade, EstadoBoid.SeekObject, () => !veCazador() && veObjeto());
-        fsm.AgregarTransicion(EstadoBoid.Evade, EstadoBoid.Flocking, () => !veCazador());
-
-        fsm.AgregarTransicion(EstadoBoid.SeekObject, EstadoBoid.Dead, muerto);
-        fsm.AgregarTransicion(EstadoBoid.SeekObject, EstadoBoid.Evade, veCazador);
-        fsm.AgregarTransicion(EstadoBoid.SeekObject, EstadoBoid.Consume, LlegoAlObjetivo);
-        fsm.AgregarTransicion(EstadoBoid.SeekObject, EstadoBoid.Flocking, sinObjetivo);
-
-        fsm.AgregarTransicion(EstadoBoid.Consume, EstadoBoid.Dead, muerto);
-        fsm.AgregarTransicion(EstadoBoid.Consume, EstadoBoid.Evade, veCazador);
-        fsm.AgregarTransicion(EstadoBoid.Consume, EstadoBoid.Flocking, sinObjetivo);
-
-        fsm.AgregarTransicion(EstadoBoid.Dead, EstadoBoid.Respawn, () => FueRecolectado);
-
-        fsm.AgregarTransicion(EstadoBoid.Respawn, EstadoBoid.Flocking, () => respawn.Terminado);
+        fsm.AgregarEstado(EstadoBoid.Respawn, new EstadoRespawn(this));
     }
 
     public Vector3 FuerzaSeparacion()
@@ -230,7 +204,7 @@ public class Boid : Agente
         return objeto.Radio + radioCuerpo + margenObjeto;
     }
 
-    private bool LlegoAlObjetivo()
+    public bool LlegoAlObjetivo()
     {
         if (ObjetivoActual == null) return false;
         return DistanciaPlana(ObjetivoActual.transform.position) <= DistanciaParada(ObjetivoActual) + toleranciaLlegada;

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class EstadoHunt : IEstado
+public class EstadoHunt : Estado<EstadoCazador>
 {
     private readonly Cazador cazador;
     private Vector3 ultimaPosicion;
@@ -10,15 +10,33 @@ public class EstadoHunt : IEstado
         this.cazador = cazador;
     }
 
-    public void Entrar()
+    public override void Entrar()
     {
         cazador.CambiarLimiteVelocidad(cazador.VelocidadMax);
         cazador.Presa = cazador.Percepcion.VivoMasCercano();
         ultimaPosicion = cazador.Presa != null ? cazador.Presa.transform.position : cazador.transform.position;
     }
 
-    public void Ejecutar()
+    public override void Ejecutar()
     {
+        if (cazador.Energy <= 0f)
+        {
+            fsm.CambiarEstado(EstadoCazador.Rest);
+            return;
+        }
+
+        if (cazador.PresaFueraDeLimites())
+        {
+            fsm.CambiarEstado(EstadoCazador.Patrol);
+            return;
+        }
+
+        if (cazador.HayBoidMuerto())
+        {
+            fsm.CambiarEstado(EstadoCazador.Gather);
+            return;
+        }
+
         cazador.ConsumirEnergia();
 
         if (cazador.Presa == null || cazador.Presa.EstaMuerto)
@@ -48,7 +66,7 @@ public class EstadoHunt : IEstado
             cazador.AgregarFuerza(cazador.FuerzaArrive(ultimaPosicion, cazador.DistanciaAcercamiento));
     }
 
-    public void Salir()
+    public override void Salir()
     {
         cazador.Presa = null;
     }

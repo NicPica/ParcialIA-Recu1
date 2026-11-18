@@ -1,4 +1,4 @@
-public class EstadoDead : IEstado
+public class EstadoDead : Estado<EstadoBoid>
 {
     private readonly Boid boid;
 
@@ -7,12 +7,16 @@ public class EstadoDead : IEstado
         this.boid = boid;
     }
 
-    public void Entrar()
+    public override void Entrar()
     {
         boid.Detener();
     }
 
-    public void Ejecutar() { }
+    public override void Ejecutar()
+    {
+        if (boid.FueRecolectado)
+            fsm.CambiarEstado(EstadoBoid.Respawn);
+    }
 
-    public void Salir() { }
+    public override void Salir() { }
 }
